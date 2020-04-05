@@ -7,6 +7,7 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 #include <QSqlQuery>
+#include <QTimer>
 
 namespace Ui {
 class Exam;
@@ -17,11 +18,16 @@ class Exam : public QWidget
     Q_OBJECT
 
 public:
-    explicit Exam(int id,QWidget *parent = nullptr);
+    explicit Exam(QWidget *parent = nullptr);
     ~Exam();
 
 private:
     Ui::Exam *ui;
+    struct Paper{
+        int id;
+        int partten;
+        int countdown;
+    };
 };
 
 #endif // EXAM_H

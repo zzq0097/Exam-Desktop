@@ -10,6 +10,8 @@
 #include <QSqlDatabase>
 #include <QVBoxLayout>
 #include <QTimer>
+#include <QDebug>
+#include <QDateTime>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Login; }
@@ -26,16 +28,19 @@ public:
 public slots:
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
-    void goExam(int id, int pattern);
     void showInfo(QString info);
 private slots:
-    void on_pushButton_clicked();
-    void on_pushButton_2_clicked();
     void getServerTime();
-
+    void on_pushButton_quit_clicked();
+    void on_pushButton_login_clicked();
+    void goExam();
 private:
     Ui::Login *ui;
     QPoint dragPosition;
     int *now;
+    int id;
+    int start;
+    int end;
+    int pattern;
 };
 #endif // LOGIN_H

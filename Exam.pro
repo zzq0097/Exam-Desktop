@@ -17,18 +17,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     exam.cpp \
-    full_exam.cpp \
+    keyhook.cpp \
     main.cpp \
     login.cpp
 
 HEADERS += \
     exam.h \
-    full_exam.h \
+    keyhook.h \
     login.h
 
 FORMS += \
     exam.ui \
-    full_exam.ui \
     login.ui
 
 # Default rules for deployment.

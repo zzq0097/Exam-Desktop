@@ -1,11 +1,6 @@
-#include "login.h"
+ #include "login.h"
 #include "ui_login.h"
 #include "exam.h"
-#include "full_exam.h"
-#include <QDebug>
-#include <QDateTime>
-#include <QTimer>
-#include <windows.h>
 
 Login::Login(QWidget *parent)
     : QWidget(parent)
@@ -13,15 +8,6 @@ Login::Login(QWidget *parent)
 {
     ui->setupUi(this);
     this->setWindowFlags(Qt::FramelessWindowHint);//去掉标题栏
-    QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL");
-    db.setHostName("122.51.73.146");
-    db.setDatabaseName("exam");
-    db.setUserName("root");
-    db.setPassword("zzq123456");
-    if(!db.open()){
-        QMessageBox::about(NULL,"Error","数据库连接失败");
-    }
-    getServerTime();
 }
 
 Login::~Login()
@@ -29,7 +15,7 @@ Login::~Login()
     delete ui;
 }
 
-void Login::on_pushButton_clicked()
+void Login::on_pushButton_login_clicked()
 {
     QSqlQuery query;
     query.prepare("select *from user where username = :username and password = :password");
@@ -37,34 +23,33 @@ void Login::on_pushButton_clicked()
     query.bindValue(":password",ui->password->text());
     query.exec();
     if(query.size()>0){
-        query.prepare("select * from "
+        query.prepare("select *,unix_timestamp() from "
                       "(select * from paper where courseid in "
                       "(select courseid from teach where teachid in "
                       "(select teachid from getclass where classid = "
-                      "(select classid from stu_class where userid = "
-                      "(select id from user where username = :username)))))a "
+                      "(select class from user where username = :username))))a "
                       "where finishtime > now() and Hour(starttime)-Hour(now()) < 8 "
                       "ORDER BY starttime limit 1");
         query.bindValue(":username",ui->username->text());
         query.exec();
         if (query.size() < 1){
-            Login::showInfo("今天没有考试");
+            showInfo("今天没有考试");
         }
         while (query.next()) {
-            int id = query.value(0).toInt();
-            int start = query.value(1).toDateTime().toTime_t();
-            int end = query.value(2).toDateTime().toTime_t();
-            int pattern = query.value(3).toInt();
-            if (start > *now){
+            id = query.value(0).toInt();
+            start = query.value(1).toDateTime().toTime_t();
+            end = query.value(2).toDateTime().toTime_t();
+            pattern = query.value(3).toInt();
+            *now = query.value(6).toInt();
+            if (start<=*now) {
+                goExam();
+            } else {
                 QString startTime = QDateTime::fromTime_t(start).toString("yyyy-MM-dd hh:mm:ss");
-                Login::showInfo(QString("最近一场考试: %1").arg(startTime));
-                QTimer *timer = new QTimer(this);
-                connect(timer,SIGNAL(timeout()),this,SLOT(getServerTime()));
-                timer->start(1000);
-            }
-            if (start<=*now && *now<end) {
-                this->close();
-                Login::goExam(id,pattern);
+                showInfo(QString("最近一场考试: %1").arg(startTime));
+//                QTimer *timer = new QTimer(this);
+//                connect(timer,SIGNAL(timeout()),this,SLOT(getServerTime()));
+//                timer->start(1000);
+                QTimer::singleShot((start-*now)*1000,this,SLOT(goExam()));
             }
         }
     } else {
@@ -79,30 +64,30 @@ void Login::getServerTime() //循环获取服务器时间
     while (query.next()) {
         *now = query.value(0).toInt();
     }
-    qDebug()<<*now;
-}
-
-void Login::goExam(int id,int pattern)
-{
-    if (pattern == 1){
-        Exam *exam = new Exam(id);
-        exam->show();
-    } else if (pattern == 2){
-        Full_Exam *full_exam = new Full_Exam(id);
-        full_exam->show();
-    }
+    qDebug()<<QDateTime::fromTime_t(*now).toString("yyyy-MM-dd hh:mm:ss");
+    int hour = ((start - *now)/3600)%12;
+    int min = ((start - *now)/60)%60;
+    int sec = (start - *now)%60;
+    qDebug()<<QString("start-now:%1秒-----%2:%3：%4").arg(start-*now).arg(hour).arg(min).arg(sec);
 }
 
 void Login::showInfo(QString info)
 {
     ui->title->setText(info);
     ui->title->move(0,50);
-    ui->pushButton_2->move(200,220);
+    ui->pushButton_quit->move((this->geometry().width()-ui->pushButton_quit->width())/2,220);
     delete ui->l_username;
     delete ui->l_password;
     delete ui->password;
     delete ui->username;
-    delete ui->pushButton;
+    delete ui->pushButton_login;
+}
+
+void Login::goExam()
+{
+    this->close();
+    Exam *exam = new Exam;
+    exam->show();
 }
 
 void Login::mousePressEvent(QMouseEvent *event)//令窗口可以被拖动
@@ -122,7 +107,7 @@ void Login::mouseMoveEvent(QMouseEvent *event)//令窗口可以被拖动
     }
 }
 
-void Login::on_pushButton_2_clicked()
+void Login::on_pushButton_quit_clicked()
 {
     this->close();
 }

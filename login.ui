@@ -16,7 +16,7 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <widget class="QPushButton" name="pushButton">
+  <widget class="QPushButton" name="pushButton_login">
    <property name="geometry">
     <rect>
      <x>120</x>
@@ -109,7 +109,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton_2">
+  <widget class="QPushButton" name="pushButton_quit">
    <property name="geometry">
     <rect>
      <x>290</x>
