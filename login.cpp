@@ -1,6 +1,5 @@
- #include "login.h"
+#include "login.h"
 #include "ui_login.h"
-#include "exam.h"
 
 Login::Login(QWidget *parent)
     : QWidget(parent)
@@ -41,15 +40,21 @@ void Login::on_pushButton_login_clicked()
             end = query.value(2).toDateTime().toTime_t();
             pattern = query.value(3).toInt();
             *now = query.value(6).toInt();
+
+            Exam::Paper paper;
+            paper.id = id;
+            paper.pattern = pattern;
+            paper.countdown = *now - start;
+
             if (start<=*now) {
-                goExam();
+                goExam(paper);
             } else {
                 QString startTime = QDateTime::fromTime_t(start).toString("yyyy-MM-dd hh:mm:ss");
                 showInfo(QString("最近一场考试: %1").arg(startTime));
 //                QTimer *timer = new QTimer(this);
 //                connect(timer,SIGNAL(timeout()),this,SLOT(getServerTime()));
 //                timer->start(1000);
-                QTimer::singleShot((start-*now)*1000,this,SLOT(goExam()));
+                QTimer::singleShot((start-*now)*1000,this,SLOT(goExam(paper)));
             }
         }
     } else {
@@ -83,10 +88,10 @@ void Login::showInfo(QString info)
     delete ui->pushButton_login;
 }
 
-void Login::goExam()
+void Login::goExam(Exam::Paper paper)
 {
     this->close();
-    Exam *exam = new Exam;
+    Exam *exam = new Exam(paper);
     exam->show();
 }
 

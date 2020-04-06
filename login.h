@@ -12,6 +12,7 @@
 #include <QTimer>
 #include <QDebug>
 #include <QDateTime>
+#include "exam.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Login; }
@@ -25,15 +26,14 @@ public:
     Login(QWidget *parent = nullptr);
     ~Login();
 
-public slots:
+private slots:
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void showInfo(QString info);
-private slots:
     void getServerTime();
     void on_pushButton_quit_clicked();
     void on_pushButton_login_clicked();
-    void goExam();
+    void goExam(Exam::Paper paper);
 private:
     Ui::Login *ui;
     QPoint dragPosition;

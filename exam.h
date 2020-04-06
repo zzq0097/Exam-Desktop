@@ -8,6 +8,7 @@
 #include <QVBoxLayout>
 #include <QSqlQuery>
 #include <QTimer>
+#include <QProcess>
 
 namespace Ui {
 class Exam;
@@ -18,16 +19,18 @@ class Exam : public QWidget
     Q_OBJECT
 
 public:
-    explicit Exam(QWidget *parent = nullptr);
-    ~Exam();
-
-private:
-    Ui::Exam *ui;
     struct Paper{
         int id;
-        int partten;
+        int pattern;
         int countdown;
     };
+    explicit Exam(Paper paper,QWidget *parent = nullptr);
+    ~Exam();
+
+private slots:
+    void banUSB();
+private:
+    Ui::Exam *ui;
 };
 
 #endif // EXAM_H
