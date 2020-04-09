@@ -20,6 +20,8 @@ class Exam : public QWidget
 
 public:
     struct Paper{
+        QString name;
+        QString username;
         int id;
         int pattern;
         int countdown;
@@ -27,8 +29,6 @@ public:
     explicit Exam(Paper paper,QWidget *parent = nullptr);
     ~Exam();
 
-private slots:
-    void banUSB();
 private:
     Ui::Exam *ui;
 };

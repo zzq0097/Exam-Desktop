@@ -2,6 +2,8 @@ QT       += core gui sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+# QMAKE_LFLAGS += /MANIFESTUAC:\"level=\'requireAdministrator\' uiAccess=\'false\'\"
+
 CONFIG += c++11
 
 # The following define makes your compiler emit warnings if you use
@@ -19,12 +21,14 @@ SOURCES += \
     exam.cpp \
     keyhook.cpp \
     main.cpp \
-    login.cpp
+    login.cpp \
+    usbmgr.cpp
 
 HEADERS += \
     exam.h \
     keyhook.h \
-    login.h
+    login.h \
+    usbmgr.h
 
 FORMS += \
     exam.ui \

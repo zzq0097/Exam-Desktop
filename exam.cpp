@@ -1,7 +1,7 @@
 #include "exam.h"
 #include "ui_exam.h"
 #include "keyhook.h"
-
+#include "usbmgr.h"
 
 Exam::Exam(Paper paper,QWidget *parent) :
     QWidget(parent),
@@ -16,15 +16,16 @@ Exam::Exam(Paper paper,QWidget *parent) :
         this->showFullScreen();  // 全屏
         KeyHook *keyhook = new KeyHook;  // 启用键盘钩子 禁用组合键
         keyhook->setHook();
-    } else if (0==2){  // 限通信模式
+    } else if (2==2){  // 限通信模式
         QProcess *p = new QProcess(this);
-        connect(p, SIGNAL(readyReadStandardOutput()),this, SLOT(banUSB()));
-        connect(p, SIGNAL(readyReadStandardError()),this, SLOT(banUSB()));
-        qDebug()<<p->readAllStandardOutput();
         QString pname = "TIM.exe";
         QString cmd = "taskkill /im "+pname+" /f";
         p->execute(cmd);
         p->close();
+
+        UsbMgr *usbMgr = new UsbMgr;
+        usbMgr->disableUSB();
+        usbMgr->enableUSB();
     }
 
     QVBoxLayout * Layout = new QVBoxLayout;
@@ -34,7 +35,10 @@ Exam::Exam(Paper paper,QWidget *parent) :
     query.bindValue(":id",paper.id);
     query.exec();
 
-
+    ui->info->setText("试卷ID:" + QString::number(paper.id)
+                      + "    考试人: 123"
+                      + "    考试时长：120分钟"
+                      + "    考试科目：JAVA");
     int index = 0;
     while (query.next()) {
         index++;
@@ -56,7 +60,7 @@ Exam::Exam(Paper paper,QWidget *parent) :
         }
 
     }
-    this->setLayout(Layout);
+    ui->verticalLayout->addLayout(Layout);;
 }
 
 Exam::~Exam()
@@ -64,7 +68,3 @@ Exam::~Exam()
     delete ui;
 }
 
-void Exam::banUSB()
-{
-
-}
