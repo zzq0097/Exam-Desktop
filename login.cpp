@@ -26,7 +26,7 @@ void Login::on_pushButton_login_clicked()
                       "(select * from paper where courseid in "
                       "(select courseid from teach where teachid in "
                       "(select teachid from getclass where classid = "
-                      "(select class from user where username = :username))))a "
+                      "(select classid from user where username = :username))))a "
                       "where finishtime > now() and Hour(starttime)-Hour(now()) < 8 "
                       "ORDER BY starttime limit 1");
         query.bindValue(":username",ui->username->text());
@@ -44,6 +44,7 @@ void Login::on_pushButton_login_clicked()
             Exam::Paper paper;
             paper.id = id;
             paper.pattern = pattern;
+            paper.username = ui->username->text();
             paper.countdown = *now - start;
 
             if (start<=*now) {

@@ -1,6 +1,8 @@
 #include "screencap.h"
 
-Screencap::Screencap()
+Screencap::Screencap(){}
+
+void Screencap::start()
 {
 
 }

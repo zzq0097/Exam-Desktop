@@ -8,7 +8,9 @@
 #include <QVBoxLayout>
 #include <QSqlQuery>
 #include <QTimer>
-#include <QProcess>
+#include <QMessageBox>
+#include <QCloseEvent>
+#include <QList>
 
 namespace Ui {
 class Exam;
@@ -22,15 +24,23 @@ public:
     struct Paper{
         QString name;
         QString username;
+        int studentid;
         int id;
         int pattern;
         int countdown;
+
     };
     explicit Exam(Paper paper,QWidget *parent = nullptr);
     ~Exam();
 
+private slots:
+    void on_pushButton_clicked();
+    void closeEvent(QCloseEvent *event);
+    void submitAnswer(int record_id);
 private:
     Ui::Exam *ui;
+    Paper paper;
+    int recordid;
 };
 
 #endif // EXAM_H

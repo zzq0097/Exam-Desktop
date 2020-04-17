@@ -1,6 +1,3 @@
 #include "upload.h"
 
-Upload::Upload()
-{
-
-}
+Upload::Upload(){}

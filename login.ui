@@ -10,6 +10,11 @@
     <height>300</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <family>Agency FB</family>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>登录</string>
   </property>

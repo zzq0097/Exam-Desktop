@@ -20,14 +20,20 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     exam.cpp \
     keyhook.cpp \
+    killprogress.cpp \
     main.cpp \
     login.cpp \
+    screencap.cpp \
+    upload.cpp \
     usbmgr.cpp
 
 HEADERS += \
     exam.h \
     keyhook.h \
+    killprogress.h \
     login.h \
+    screencap.h \
+    upload.h \
     usbmgr.h
 
 FORMS += \

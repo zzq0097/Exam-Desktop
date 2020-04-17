@@ -2,15 +2,14 @@
 
 UsbMgr::UsbMgr(){}
 
-// 禁用USB
-void UsbMgr::disableUSB()
+void UsbMgr::disableUSB() // 禁用USB
 {
     QSettings settings("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\USBSTOR",QSettings::NativeFormat);
     settings.setValue("start", 4);
     qDebug()<<settings.value("start");
 }
-// 恢复USB
-void UsbMgr::enableUSB()
+
+void UsbMgr::enableUSB() // 恢复USB
 {
     QSettings settings("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\USBSTOR",QSettings::NativeFormat);
     settings.setValue("start", 3);
