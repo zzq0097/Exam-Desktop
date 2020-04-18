@@ -16,16 +16,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     this->paper = thispaper;
     QTimer::singleShot(paper.countdown,this,SLOT(close()));
 
-    if (paper.pattern==1){  // 霸屏模式
-        // 全屏
-        this->showFullScreen();
-        // 开启录屏
-        Screencap *screencap = new Screencap;
-        screencap->start();
-        // 启用键盘钩子 禁用组合键
-        KeyHook *keyhook = new KeyHook;
-        keyhook->setHook();
-    } else if (paper.pattern==2){  // 限通信模式
+    if (paper.pattern==1){  // 限通信模式
         // 杀死进程
         KeyHook *keyhook = new KeyHook;
         keyhook->setHook();
@@ -35,6 +26,15 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         UsbMgr *usbMgr = new UsbMgr;
         usbMgr->disableUSB();
         usbMgr->enableUSB();
+    } else if (paper.pattern==2){  // 霸屏模式
+        // 全屏
+        this->showFullScreen();
+        // 开启录屏
+        Screencap *screencap = new Screencap;
+        screencap->start();
+        // 启用键盘钩子 禁用组合键
+        KeyHook *keyhook = new KeyHook;
+        keyhook->setHook();
     }
 
     QVBoxLayout * Layout = new QVBoxLayout;
@@ -60,13 +60,21 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
                       + "    考试时长：120分钟"
                       + "    考试科目：JAVA");
     int index = 0;
-    QList<int> *answerIds = new QList<int>();
     while (query.next()) {
         int questionid = query.value(0).toInt();
         QString type = query.value(1).toString();
         QString content = query.value(2).toString();
+
+        QSqlQuery query2;
+        query2.prepare("insert into answer (recordid,questionid) values(:recordid,:questionid)");
+        query2.bindValue(":recordid",recordid);
+        query2.bindValue(":questionid",questionid);
+        query2.exec();
+        int answerid = query2.lastInsertId().toInt();
+
         index++;
         QLabel *label = new QLabel(QString::number(index)+". " + content);
+        label->setObjectName(QString::number(answerid));
         Layout->addWidget(label);
         if (type=="选择"){  // 选择题
             QButtonGroup *group = new QButtonGroup;
@@ -101,13 +109,6 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         else if (type=="编程"){  // 编程
             Layout->addWidget(new QLineEdit());
         }
-        QSqlQuery query2;
-        query2.prepare("insert into answer (recordid,questionid) values(:recordid,:questionid)");
-        query2.bindValue(":recordid",recordid);
-        query2.bindValue(":questionid",questionid);
-        query2.exec();
-        int answerid = query2.lastInsertId().toInt();
-        answerIds->append(answerid);
     }
     ui->verticalLayout->addLayout(Layout);
 }
@@ -119,12 +120,11 @@ Exam::~Exam()
 
 void Exam::closeEvent(QCloseEvent *event) //退出事件检测
 {
-    int record_id = recordid;
     switch(QMessageBox::information(this,tr("提示"),tr("是否提交答案并退出？"),tr("是的"),tr("取消"),0,1))
     {
     case 0:
         event->accept();
-        submitAnswer(record_id);
+        updateAnswer();
         break;
     case 1:
     default:
@@ -137,10 +137,10 @@ void Exam::on_pushButton_clicked()
 {
     this->close();
 }
-void Exam::submitAnswer(int record_id)
+void Exam::updateAnswer()
 {
     QVector<QObject *> list = ui->verticalLayoutWidget->children().toVector();
-//    QSqlQuery query;
+    QSqlQuery query;
     QLabel *label;
     QLineEdit *lineEdit;
     QRadioButton *radioButton;
@@ -156,13 +156,12 @@ void Exam::submitAnswer(int record_id)
             lineEdit = qobject_cast<QLineEdit*>(list[var]);
         }
         if (isQuesion){
-//            query.prepare("insert into answer (recordid,questionid,answer) values(:recordid,:questionid,:answer)");
-//            query.bindValue(":recordid",record_id);
-//            query.bindValue(":questionid",label->objectName());
-//            query.bindValue(":answer","...");
-//            if(query.exec()){
-//                qDebug()<<"success insert for answer:" + label->objectName();
-//            }
+            query.prepare("update answer set answer = :answer where answerid = :answerid");
+            query.bindValue(":answerid",label->objectName());
+            query.bindValue(":answer","...");
+            if(query.exec()){
+                qDebug()<<"success update for answer:" + label->objectName();
+            }
         }
     }
 }

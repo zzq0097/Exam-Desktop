@@ -36,7 +36,7 @@ public:
 private slots:
     void on_pushButton_clicked();
     void closeEvent(QCloseEvent *event);
-    void submitAnswer(int record_id);
+    void updateAnswer();
 private:
     Ui::Exam *ui;
     Paper paper;
