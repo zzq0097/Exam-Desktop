@@ -11,6 +11,13 @@
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QList>
+#include <QRadioButton>
+#include <QButtonGroup>
+#include <QLayoutItem>
+#include "keyhook.h"
+#include "usbmgr.h"
+#include "killprogress.h"
+#include "screencap.h"
 
 namespace Ui {
 class Exam;

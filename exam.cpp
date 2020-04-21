@@ -1,12 +1,5 @@
 #include "exam.h"
 #include "ui_exam.h"
-#include "keyhook.h"
-#include "usbmgr.h"
-#include "killprogress.h"
-#include "screencap.h"
-#include <QRadioButton>
-#include <QButtonGroup>
-#include <QLayoutItem>
 
 Exam::Exam(Paper thispaper,QWidget *parent) :
     QWidget(parent),
@@ -18,8 +11,6 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
 
     if (paper.pattern==1){  // 限通信模式
         // 杀死进程
-        KeyHook *keyhook = new KeyHook;
-        keyhook->setHook();
         KillProgress *killer = new KillProgress;
         killer->kill("Typora.exe");
         // 禁用USB
@@ -35,6 +26,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         // 启用键盘钩子 禁用组合键
         KeyHook *keyhook = new KeyHook;
         keyhook->setHook();
+        keyhook->setLock();
     }
 
     QVBoxLayout * Layout = new QVBoxLayout;
@@ -56,7 +48,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     query.exec();
 
     ui->info->setText("试卷ID:" + QString::number(paper.id)
-                      + "    考试人: 123"
+                      + "    考试人: " + paper.username
                       + "    考试时长：120分钟"
                       + "    考试科目：JAVA");
     int index = 0;
@@ -107,10 +99,13 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             Layout->addWidget(new QTextEdit());
         }
         else if (type=="编程"){  // 编程
-            Layout->addWidget(new QLineEdit());
+            QTextEdit *textEdit = new QTextEdit;
+            Layout->addWidget(textEdit);
         }
     }
     ui->verticalLayout->addLayout(Layout);
+
+    ui->verticalLayout->update();
 }
 
 Exam::~Exam()
@@ -124,7 +119,6 @@ void Exam::closeEvent(QCloseEvent *event) //退出事件检测
     {
     case 0:
         event->accept();
-        updateAnswer();
         break;
     case 1:
     default:
@@ -135,6 +129,7 @@ void Exam::closeEvent(QCloseEvent *event) //退出事件检测
 
 void Exam::on_pushButton_clicked()
 {
+    updateAnswer();
     this->close();
 }
 void Exam::updateAnswer()
@@ -143,25 +138,32 @@ void Exam::updateAnswer()
     QSqlQuery query;
     QLabel *label;
     QLineEdit *lineEdit;
+    QTextEdit *textEdit;
     QRadioButton *radioButton;
-    bool isQuesion;
+    bool isQuesion = false;
+    QString answer;
     for (int var = 0; var < list.size(); ++var) {
-        isQuesion = false;
+        if (isQuesion){
+            query.prepare("update answer set answer = :answer where answerid = :answerid");
+            query.bindValue(":answerid",label->objectName());
+            query.bindValue(":answer",answer);
+            if(query.exec()){
+                qDebug()<<"success update for answer:" + label->objectName();
+            }
+        }
         if (list[var]->metaObject()->className() == QStringLiteral("QLabel")){
             label = qobject_cast<QLabel*>(list[var]);
-            isQuesion = true;
         } else if (list[var]->metaObject()->className() == QStringLiteral("QRadioButton")){
             radioButton = qobject_cast<QRadioButton*>(list[var]);
         } else if (list[var]->metaObject()->className() == QStringLiteral("QLineEdit")){
             lineEdit = qobject_cast<QLineEdit*>(list[var]);
-        }
-        if (isQuesion){
-            query.prepare("update answer set answer = :answer where answerid = :answerid");
-            query.bindValue(":answerid",label->objectName());
-            query.bindValue(":answer","...");
-            if(query.exec()){
-                qDebug()<<"success update for answer:" + label->objectName();
-            }
+            answer = lineEdit->text();
+            isQuesion = true;
+        } else if (list[var]->metaObject()->className() == QStringLiteral("QTextEdit")){
+            textEdit = qobject_cast<QTextEdit*>(list[var]);
+            answer = textEdit->toHtml();
+            qDebug()<<answer;
+            isQuesion = true;
         }
     }
 }

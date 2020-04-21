@@ -56,6 +56,7 @@ void Login::on_pushButton_login_clicked()
 //                connect(timer,SIGNAL(timeout()),this,SLOT(getServerTime()));
 //                timer->start(1000);
                 QTimer::singleShot((start-*now)*1000,this,SLOT(goExam(paper)));
+                qDebug()<<start-*now;
             }
         }
     } else {
