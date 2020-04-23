@@ -61,4 +61,3 @@ void KeyHook::unlock()
     settings.setValue("DisableTaskMgr", 0);
     qDebug()<<settings.value("DisableTaskMgr");
 }
-

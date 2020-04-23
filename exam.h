@@ -18,6 +18,8 @@
 #include "usbmgr.h"
 #include "killprogress.h"
 #include "screencap.h"
+#include <QLayout>
+#include <QScrollArea>
 
 namespace Ui {
 class Exam;

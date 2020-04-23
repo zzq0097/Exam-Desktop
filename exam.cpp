@@ -1,5 +1,6 @@
 #include "exam.h"
 #include "ui_exam.h"
+//#include <QStackLayout>
 
 Exam::Exam(Paper thispaper,QWidget *parent) :
     QWidget(parent),
@@ -30,7 +31,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     }
 
     QVBoxLayout * Layout = new QVBoxLayout;
-
+//    QVBoxLayout *Layout = ui->scrollAreaWidgetContents;
     QSqlQuery query;
     query.prepare("select id from user where username = :username");
     query.bindValue(":username",paper.username);
@@ -43,14 +44,12 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     query.bindValue(":paperid",paper.id);
     query.exec();
     recordid = query.lastInsertId().toInt();
+
+
+
     query.prepare("select * from question where subjectid in (select questionid from paper_question where paperid = :id)");
     query.bindValue(":id",paper.id);
     query.exec();
-
-    ui->info->setText("试卷ID:" + QString::number(paper.id)
-                      + "    考试人: " + paper.username
-                      + "    考试时长：120分钟"
-                      + "    考试科目：JAVA");
     int index = 0;
     while (query.next()) {
         int questionid = query.value(0).toInt();
@@ -103,9 +102,11 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             Layout->addWidget(textEdit);
         }
     }
-    ui->verticalLayout->addLayout(Layout);
-
-    ui->verticalLayout->update();
+    this->setWindowTitle("试卷ID:" + QString::number(paper.id)
+                         + "    考试人: " + paper.username
+                         + "    考试时长：120分钟"
+                         + "    考试科目：JAVA");
+    ui->scrollAreaWidget->setLayout(Layout);
 }
 
 Exam::~Exam()
@@ -126,7 +127,6 @@ void Exam::closeEvent(QCloseEvent *event) //退出事件检测
         break;
     }
 }
-
 void Exam::on_pushButton_clicked()
 {
     updateAnswer();
@@ -134,7 +134,7 @@ void Exam::on_pushButton_clicked()
 }
 void Exam::updateAnswer()
 {
-    QVector<QObject *> list = ui->verticalLayoutWidget->children().toVector();
+    QVector<QObject *> list = ui->scrollAreaWidget->children().toVector();
     QSqlQuery query;
     QLabel *label;
     QLineEdit *lineEdit;
