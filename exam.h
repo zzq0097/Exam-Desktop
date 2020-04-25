@@ -1,6 +1,10 @@
 #ifndef EXAM_H
 #define EXAM_H
 
+#include "keyhook.h"
+#include "usbmgr.h"
+#include "killprogress.h"
+#include "screencap.h"
 #include <QWidget>
 #include <QLabel>
 #include <QLineEdit>
@@ -14,11 +18,6 @@
 #include <QRadioButton>
 #include <QButtonGroup>
 #include <QLayoutItem>
-#include "keyhook.h"
-#include "usbmgr.h"
-#include "killprogress.h"
-#include "screencap.h"
-#include <QLayout>
 #include <QScrollArea>
 
 namespace Ui {
