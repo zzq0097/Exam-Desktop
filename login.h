@@ -33,7 +33,7 @@ private slots:
     void getServerTime();
     void on_pushButton_quit_clicked();
     void on_pushButton_login_clicked();
-    void goExam(Exam::Paper paper);
+    void goExam();
 private:
     Ui::Login *ui;
     QPoint dragPosition;

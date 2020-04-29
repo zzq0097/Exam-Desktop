@@ -38,6 +38,18 @@ public:
         int countdown;
 
     };
+    struct Question{
+        int questionid;
+        int value;
+        QString content;
+        QString type;
+        QString option1;
+        QString option2;
+        QString option3;
+        QString option4;
+        int answerid;
+    };
+
     explicit Exam(Paper paper,QWidget *parent = nullptr);
     ~Exam();
 
