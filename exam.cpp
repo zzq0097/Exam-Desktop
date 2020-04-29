@@ -15,7 +15,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     QList<Question> questions4;
     QList<Question> questions5;
 
-    QTimer::singleShot(paper.countdown,this,SLOT(close()));
+    QTimer::singleShot(paper.countdown*1000,this,SLOT(close()));
 
     if (paper.pattern==1){  // 限通信模式
         // 杀死进程
