@@ -46,11 +46,24 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     while(query.next()){
         paper.studentid = query.value(0).toInt();
     }
-    query.prepare("insert into record(studentid,paperid,status) values(:studentid,:paperid,'未批改')");
+    query.prepare("select * from record where studentid = :studentid and paperid = :paperid");
     query.bindValue(":studentid",paper.studentid);
     query.bindValue(":paperid",paper.id);
     query.exec();
-    recordid = query.lastInsertId().toInt();
+    if (query.size()>0) { // 如果已存在记录
+        while (query.next()){
+            recordid = query.value(0).toInt();
+            isExist = true;
+            break;
+        }
+    } else { // 不存在记录
+        query.prepare("insert into record(studentid,paperid,status) values(:studentid,:paperid,'未批改')");
+        query.bindValue(":studentid",paper.studentid);
+        query.bindValue(":paperid",paper.id);
+        query.exec();
+        recordid = query.lastInsertId().toInt();
+        isExist = false;
+    }
 
     query.prepare("select * from (select question.*,a.paperid from"
                   "(select questionid,paper.paperid from paper_question left join paper on paper.paperid=paper_question.paperid where paper.paperid=:id)a "
@@ -70,13 +83,25 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         question.option3 = query.value("option3").toString();
         question.option4 = query.value("option4").toString();
 
-        // 插入答案记录并返回id
+
         QSqlQuery query2;
-        query2.prepare("insert into answer (recordid,questionid) values(:recordid,:questionid)");
-        query2.bindValue(":recordid",recordid);
-        query2.bindValue(":questionid",question.questionid);
-        query2.exec();
-        question.answerid = query2.lastInsertId().toInt();
+        if (isExist){ // 如果考试已存在，查询已插入的答案id
+            query2.prepare("select * from answer where recordid = :recordid and questionid = :questionid");
+            query2.bindValue(":recordid",recordid);
+            query2.bindValue(":questionid",question.questionid);
+            query2.exec();
+            while(query2.next()){
+                question.answerid = query2.value("answerid").toInt();
+                question.answer = query2.value("answer").toString();
+                break;
+            }
+        } else {   // 插入答案记录并返回id
+            query2.prepare("insert into answer (recordid,questionid) values(:recordid,:questionid)");
+            query2.bindValue(":recordid",recordid);
+            query2.bindValue(":questionid",question.questionid);
+            query2.exec();
+            question.answerid = query2.lastInsertId().toInt();
+        }
 
         if (question.type=="选择"){
             questions1.append(question);
@@ -103,6 +128,15 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             QRadioButton *radioB = new QRadioButton("B:"+questions1[i].option2);
             QRadioButton *radioC = new QRadioButton("C:"+questions1[i].option3);
             QRadioButton *radioD = new QRadioButton("D:"+questions1[i].option4);
+            if(questions1[i].answer == "A"){
+                radioA->setChecked(true);
+            } else if (questions1[i].answer == "B"){
+                radioB->setChecked(true);
+            } else if (questions1[i].answer == "C"){
+                radioC->setChecked(true);
+            } else if (questions1[i].answer == "D"){
+                radioD->setChecked(true);
+            }
             group->addButton(radioA);
             group->addButton(radioB);
             group->addButton(radioC);
@@ -124,6 +158,11 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             QButtonGroup *group = new QButtonGroup;
             QRadioButton *radioA = new QRadioButton("对");
             QRadioButton *radioB = new QRadioButton("错");
+            if(questions2[i].answer == "A"){
+                radioA->setChecked(true);
+            } else if (questions2[i].answer == "B"){
+                radioB->setChecked(true);
+            }
             group->addButton(radioA);
             group->addButton(radioB);
             Layout->addWidget(radioA);
@@ -138,7 +177,9 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             QLabel *label = new QLabel(QString::number(index)+". " + questions3[i].content + "(分值:"+QString::number(questions3[i].value)+"分)");
             label->setObjectName(QString::number(questions3[i].answerid));
             Layout->addWidget(label);
-            Layout->addWidget(new QLineEdit);
+            QLineEdit *lineEdit = new QLineEdit;
+            lineEdit->setText(questions3[i].answer);
+            Layout->addWidget(lineEdit);
         }
     }
 
@@ -149,7 +190,9 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             QLabel *label = new QLabel(QString::number(index)+". " + questions4[i].content + "(分值:"+QString::number(questions4[i].value)+"分)");
             label->setObjectName(QString::number(questions4[i].answerid));
             Layout->addWidget(label);
-            Layout->addWidget(new QTextEdit);
+            QTextEdit *textEdit = new QTextEdit;
+            textEdit->setHtml(questions4[i].answer);
+            Layout->addWidget(textEdit);
         }
     }
 
@@ -160,15 +203,16 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             QLabel *label = new QLabel(QString::number(index)+". " + questions5[i].content + "(分值:"+QString::number(questions5[i].value)+"分)");
             label->setObjectName(QString::number(questions5[i].answerid));
             Layout->addWidget(label);
-            Layout->addWidget(new QTextEdit);
+            QTextEdit *textEdit = new QTextEdit;
+            textEdit->setHtml(questions4[i].answer);
+            Layout->addWidget(textEdit);
         }
     }
 
     this->setWindowTitle("试卷ID:" + QString::number(paper.id)
                          + "    考试人: " + paper.username
                          + "    考试时长：120分钟"
-                         + "    考试科目：JAVA"
-                         + "    试卷总分：100");
+                         + "    考试科目：JAVA");
     ui->scrollAreaWidget->setLayout(Layout);
 }
 
@@ -195,38 +239,48 @@ void Exam::on_pushButton_clicked()
 {
     this->close();
 }
+
 void Exam::updateAnswer()
 {
-//    QVector<QObject *> list = ui->scrollAreaWidget->children().toVector();
-//    QSqlQuery query;
-//    QLabel *label;
-//    QLineEdit *lineEdit;
-//    QTextEdit *textEdit;
-//    QRadioButton *radioButton;
-//    bool isQuesion = false;
-//    QString answer;
-//    for (int var = 0; var < list.size(); ++var) {
-//        if (isQuesion){
-//            query.prepare("update answer set answer = :answer where answerid = :answerid");
-//            query.bindValue(":answerid",label->objectName());
-//            query.bindValue(":answer",answer);
-//            if(query.exec()){
-//                qDebug()<<"success update for answer:" + label->objectName();
-//            }
-//        }
-//        if (list[var]->metaObject()->className() == QStringLiteral("QLabel")){
-//            label = qobject_cast<QLabel*>(list[var]);
-//        } else if (list[var]->metaObject()->className() == QStringLiteral("QRadioButton")){
-//            radioButton = qobject_cast<QRadioButton*>(list[var]);
-//        } else if (list[var]->metaObject()->className() == QStringLiteral("QLineEdit")){
-//            lineEdit = qobject_cast<QLineEdit*>(list[var]);
-//            answer = lineEdit->text();
-//            isQuesion = true;
-//        } else if (list[var]->metaObject()->className() == QStringLiteral("QTextEdit")){
-//            textEdit = qobject_cast<QTextEdit*>(list[var]);
-//            answer = textEdit->toHtml();
-//            qDebug()<<answer;
-//            isQuesion = true;
-//        }
-//    }
+    QVector<QObject *> list = ui->scrollAreaWidget->children().toVector();
+    QSqlQuery query;
+    QLabel *label;
+    QLineEdit *lineEdit;
+    QTextEdit *textEdit;
+    QRadioButton *radioButton;
+    bool isQuesion = false;
+    QString answer;
+    QList<QString> abcd = {"","A","B","C","D"};
+    int x;
+    for (int var = 0; var < list.size(); ++var) {
+        if (list[var]->metaObject()->className() == QStringLiteral("QLabel")){
+            x = 0;
+            label = qobject_cast<QLabel*>(list[var]);
+            if (label->objectName()==nullptr){  // 跳过大题提示
+                continue;
+            }
+            if (isQuesion){
+                query.prepare("update answer set answer = :answer where answerid = :answerid");
+                query.bindValue(":answerid",label->objectName());
+                query.bindValue(":answer",answer);
+                if(query.exec()){
+                    qDebug()<<"success update for answer:" + label->objectName();
+                }
+            }
+            isQuesion = true;
+        } else if (list[var]->metaObject()->className() == QStringLiteral("QRadioButton")){
+            radioButton = qobject_cast<QRadioButton*>(list[var]);
+            ++x;
+            if (radioButton->isChecked()){
+                answer = abcd[x];
+                qDebug()<<answer;
+            }
+        } else if (list[var]->metaObject()->className() == QStringLiteral("QLineEdit")){
+            lineEdit = qobject_cast<QLineEdit*>(list[var]);
+            answer = lineEdit->text();
+        } else if (list[var]->metaObject()->className() == QStringLiteral("QTextEdit")){
+            textEdit = qobject_cast<QTextEdit*>(list[var]);
+            answer = textEdit->toHtml();
+        }
+    }
 }

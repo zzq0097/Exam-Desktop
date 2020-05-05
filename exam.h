@@ -48,6 +48,7 @@ public:
         QString option3;
         QString option4;
         int answerid;
+        QString answer;
     };
 
     explicit Exam(Paper paper,QWidget *parent = nullptr);
@@ -61,6 +62,7 @@ private:
     Ui::Exam *ui;
     Paper paper;
     int recordid;
+    bool isExist;
 };
 
 #endif // EXAM_H
