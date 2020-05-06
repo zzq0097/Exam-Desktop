@@ -1,5 +1,6 @@
 #include "exam.h"
 #include "ui_exam.h"
+#include "QRecordingModule.h"
 
 Exam::Exam(Paper thispaper,QWidget *parent) :
     QWidget(parent),
@@ -26,8 +27,10 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         usbMgr->disableUSB();
         usbMgr->enableUSB();
         // 开启录屏
-        Screencap *screencap = new Screencap;
-        screencap->start();
+//        Screencap *screencap = new Screencap;
+//        screencap->start();
+        QRecordingModule *qrm = new QRecordingModule;
+        qrm->startRecord();
     } else if (paper.pattern==2){  // 霸屏模式
         // 全屏
         this->showFullScreen();
@@ -65,11 +68,11 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         isExist = false;
     }
 
-    query.prepare("select * from (select question.*,a.paperid from"
-                  "(select questionid,paper.paperid from paper_question left join paper on paper.paperid=paper_question.paperid where paper.paperid=:id)a "
-                  "left join question on question.subjectid=a.questionid)a, "
-                  "(select strategy.value,paper.paperid from paper left join strategy on strategy.paperid=paper.paperid where paper.paperid=:id)b "
-                  "where a.paperid=b.paperid");
+    query.prepare("select distinct subjectid,type,content,option1,option2,option3,option4,answer,difficulty,chapterid,a.paperid,value from "
+                  "(select question.*,a.paperid from (select questionid,paper.paperid from paper_question left join paper on "
+                  "paper.paperid=paper_question.paperid where paper.paperid=:id)a  left join question on question.subjectid=a.questionid)a, "
+                  "(select strategy.value,paper.paperid from paper left join strategy on strategy.paperid=paper.paperid where "
+                  "paper.paperid=:id)b where a.paperid=b.paperid");
     query.bindValue(":id",paper.id);
     query.exec();
     while (query.next()) {
@@ -255,17 +258,17 @@ void Exam::updateAnswer()
     for (int var = 0; var < list.size(); ++var) {
         if (list[var]->metaObject()->className() == QStringLiteral("QLabel")){
             x = 0;
-            label = qobject_cast<QLabel*>(list[var]);
-            if (label->objectName()==nullptr){  // 跳过大题提示
-                continue;
-            }
             if (isQuesion){
                 query.prepare("update answer set answer = :answer where answerid = :answerid");
                 query.bindValue(":answerid",label->objectName());
                 query.bindValue(":answer",answer);
                 if(query.exec()){
-                    qDebug()<<"success update for answer:" + label->objectName();
+                    qDebug()<<"success update for answerid:" + label->objectName() + "||answer:" + answer;
                 }
+            }
+            label = qobject_cast<QLabel*>(list[var]);
+            if (label->objectName()==nullptr){  // 跳过大题提示
+                continue;
             }
             isQuesion = true;
         } else if (list[var]->metaObject()->className() == QStringLiteral("QRadioButton")){
@@ -273,7 +276,6 @@ void Exam::updateAnswer()
             ++x;
             if (radioButton->isChecked()){
                 answer = abcd[x];
-                qDebug()<<answer;
             }
         } else if (list[var]->metaObject()->className() == QStringLiteral("QLineEdit")){
             lineEdit = qobject_cast<QLineEdit*>(list[var]);

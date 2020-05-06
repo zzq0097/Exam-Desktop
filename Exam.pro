@@ -18,22 +18,22 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    QRecordingModule.cpp \
     avilib.c \
     exam.cpp \
     keyhook.cpp \
     killprogress.cpp \
     main.cpp \
     login.cpp \
-    screencap.cpp \
     upload.cpp \
     usbmgr.cpp
 
 HEADERS += \
+    QRecordingModule.h \
     exam.h \
     keyhook.h \
     killprogress.h \
     login.h \
-    screencap.h \
     upload.h \
     usbmgr.h
 
