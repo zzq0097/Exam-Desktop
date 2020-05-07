@@ -4,7 +4,7 @@
 #include "keyhook.h"
 #include "usbmgr.h"
 #include "killprogress.h"
-#include "screencap.h"
+#include "QRecordingModule.h"
 #include <QWidget>
 #include <QLabel>
 #include <QLineEdit>
@@ -19,6 +19,11 @@
 #include <QButtonGroup>
 #include <QLayoutItem>
 #include <QScrollArea>
+#include <QFile>
+#include <QNetworkRequest>
+#include <QHttpMultiPart>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 namespace Ui {
 class Exam;
@@ -58,6 +63,7 @@ private slots:
     void on_pushButton_clicked();
     void closeEvent(QCloseEvent *event);
     void updateAnswer();
+    void uploadFile();
 private:
     Ui::Exam *ui;
     Paper paper;

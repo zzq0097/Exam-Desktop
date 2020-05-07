@@ -1,4 +1,4 @@
-QT       += core gui sql
+QT       += core gui sql network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -25,7 +25,6 @@ SOURCES += \
     killprogress.cpp \
     main.cpp \
     login.cpp \
-    upload.cpp \
     usbmgr.cpp
 
 HEADERS += \
@@ -34,7 +33,6 @@ HEADERS += \
     keyhook.h \
     killprogress.h \
     login.h \
-    upload.h \
     usbmgr.h
 
 FORMS += \

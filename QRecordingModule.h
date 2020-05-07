@@ -6,6 +6,11 @@
 #include <QPixmap>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QByteArray>
+#include <QBuffer>
+#include <QDebug>
+#include <QDateTime>
+#include <windows.h>
 
 extern "C"
 {
@@ -28,7 +33,7 @@ private:
 	void endAvi();
 
 protected:
-	virtual	void	run();
+    virtual	void run();
 
 private:
 	avi_t *out_fd;

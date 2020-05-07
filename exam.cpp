@@ -1,6 +1,5 @@
 #include "exam.h"
 #include "ui_exam.h"
-#include "QRecordingModule.h"
 
 Exam::Exam(Paper thispaper,QWidget *parent) :
     QWidget(parent),
@@ -26,11 +25,11 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         UsbMgr *usbMgr = new UsbMgr;
         usbMgr->disableUSB();
         usbMgr->enableUSB();
-        // 开启录屏
-//        Screencap *screencap = new Screencap;
-//        screencap->start();
-        QRecordingModule *qrm = new QRecordingModule;
-        qrm->startRecord();
+        if (0==1){  // 是否开启录屏
+            QRecordingModule *qrm = new QRecordingModule;
+            qrm->startRecord();
+        }
+
     } else if (paper.pattern==2){  // 霸屏模式
         // 全屏
         this->showFullScreen();
@@ -86,9 +85,8 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         question.option3 = query.value("option3").toString();
         question.option4 = query.value("option4").toString();
 
-
         QSqlQuery query2;
-        if (isExist){ // 如果考试已存在，查询已插入的答案id
+        if (isExist){  // 如果考试已存在，查询已插入的答案id
             query2.prepare("select * from answer where recordid = :recordid and questionid = :questionid");
             query2.bindValue(":recordid",recordid);
             query2.bindValue(":questionid",question.questionid);
@@ -98,7 +96,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
                 question.answer = query2.value("answer").toString();
                 break;
             }
-        } else {   // 插入答案记录并返回id
+        } else {  // 插入答案记录并返回id
             query2.prepare("insert into answer (recordid,questionid) values(:recordid,:questionid)");
             query2.bindValue(":recordid",recordid);
             query2.bindValue(":questionid",question.questionid);
@@ -219,31 +217,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     ui->scrollAreaWidget->setLayout(Layout);
 }
 
-Exam::~Exam()
-{
-    delete ui;
-}
-
-void Exam::closeEvent(QCloseEvent *event) //退出事件检测
-{
-    updateAnswer();
-    switch(QMessageBox::information(this,tr("提示"),tr("是否提交答案并退出？"),tr("是的"),tr("取消"),0,1))
-    {
-    case 0:
-        event->accept();
-        break;
-    case 1:
-    default:
-        event->ignore();
-        break;
-    }
-}
-void Exam::on_pushButton_clicked()
-{
-    this->close();
-}
-
-void Exam::updateAnswer()
+void Exam::updateAnswer()//更新答案
 {
     QVector<QObject *> list = ui->scrollAreaWidget->children().toVector();
     QSqlQuery query;
@@ -285,4 +259,47 @@ void Exam::updateAnswer()
             answer = textEdit->toHtml();
         }
     }
+}
+
+void Exam::uploadFile()// 文件上传
+{
+    QNetworkRequest request;
+    QString url = "";
+    request.setUrl(QUrl(url));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/x-www-form-urlencoded"));
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    auto body = QString("").toLatin1();
+    QNetworkReply *reply = manager->post(request, body);
+    connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply* r){
+        Q_UNUSED(r)
+        // 处理返回结果的逻辑
+    });
+    connect(reply, &QNetworkReply::readyRead, [=](){
+        qDebug () << "readyRead";
+    });
+}
+
+void Exam::on_pushButton_clicked()// 提交按钮
+{
+    this->close();
+}
+
+void Exam::closeEvent(QCloseEvent *event)//退出事件检测
+{
+    updateAnswer();
+    switch(QMessageBox::information(this,tr("提示"),tr("是否提交答案并退出？"),tr("是的"),tr("取消"),0,1))
+    {
+    case 0:
+        event->accept();
+        break;
+    case 1:
+    default:
+        event->ignore();
+        break;
+    }
+}
+
+Exam::~Exam()
+{
+    delete ui;
 }
