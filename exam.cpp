@@ -1,12 +1,13 @@
 #include "exam.h"
 #include "ui_exam.h"
+#include <QDir>
 
 Exam::Exam(Paper thispaper,QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Exam)
 {
     ui->setupUi(this);
-    // 初始化
+    // 数据初始化
     this->paper = thispaper;
     int index = 0;
     QList<Question> questions1;
@@ -14,33 +15,10 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     QList<Question> questions3;
     QList<Question> questions4;
     QList<Question> questions5;
-
-    QTimer::singleShot(paper.countdown*1000,this,SLOT(close()));
-
-    if (paper.pattern==1){  // 限通信模式
-        // 杀死进程
-        KillProgress *killer = new KillProgress;
-        killer->kill("Typora.exe");
-        // 禁用USB
-        UsbMgr *usbMgr = new UsbMgr;
-        usbMgr->disableUSB();
-        usbMgr->enableUSB();
-        if (0==1){  // 是否开启录屏
-            QRecordingModule *qrm = new QRecordingModule;
-            qrm->startRecord();
-        }
-
-    } else if (paper.pattern==2){  // 霸屏模式
-        // 全屏
-        this->showFullScreen();
-        // 启用键盘钩子 禁用组合键
-        KeyHook *keyhook = new KeyHook;
-        keyhook->setHook();
-        keyhook->setLock();
-    }
-
     QVBoxLayout * Layout = new QVBoxLayout;
-
+    // 定时退出
+    QTimer::singleShot(paper.countdown*1000,this,SLOT(close()));
+    // 获取学生ID
     QSqlQuery query;
     query.prepare("select id from user where username = :username");
     query.bindValue(":username",paper.username);
@@ -48,6 +26,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     while(query.next()){
         paper.studentid = query.value(0).toInt();
     }
+    // 获取或插入考试记录
     query.prepare("select * from record where studentid = :studentid and paperid = :paperid");
     query.bindValue(":studentid",paper.studentid);
     query.bindValue(":paperid",paper.id);
@@ -66,7 +45,28 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         recordid = query.lastInsertId().toInt();
         isExist = false;
     }
-
+    // 模式与功能初始化
+    if (paper.pattern==1){  // 限通信模式
+        // 杀死进程
+        KillProgress *killer = new KillProgress;
+        killer->kill("Typora.exe");
+        // 禁用USB
+        UsbMgr *usbMgr = new UsbMgr;
+        usbMgr->disableUSB();
+        usbMgr->enableUSB();
+        if (1==1){  // 是否开启录屏
+            QRecordingModule *qrm = new QRecordingModule;
+            qrm->startRecord(QString::number(recordid));
+        }
+    } else if (paper.pattern==2){  // 霸屏模式
+        // 全屏
+        this->showFullScreen();
+        // 启用键盘钩子 禁用组合键
+        KeyHook *keyhook = new KeyHook;
+        keyhook->setHook();
+        keyhook->setLock();
+    }
+    // 获取试题并分组
     query.prepare("select distinct subjectid,type,content,option1,option2,option3,option4,answer,difficulty,chapterid,a.paperid,value from "
                   "(select question.*,a.paperid from (select questionid,paper.paperid from paper_question left join paper on "
                   "paper.paperid=paper_question.paperid where paper.paperid=:id)a  left join question on question.subjectid=a.questionid)a, "
@@ -116,7 +116,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             questions5.append(question);
         }
     }
-
+    // 生成试题控件
     if (questions1.count() > 0){
         Layout->addWidget(new QLabel("一、选择题。 共"+QString::number(questions1.count())+"题"));
         for (int i=0;i<questions1.count();++i) {
@@ -148,7 +148,6 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             Layout->addWidget(radioD);
         }
     }
-
     if (questions2.count() > 0){
         Layout->addWidget(new QLabel("二、判断题。 共"+QString::number(questions2.count())+"题"));
         for (int i=0;i<questions2.count();++i) {
@@ -170,9 +169,8 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             Layout->addWidget(radioB);
         }
     }
-
     if (questions3.count() > 0){
-        Layout->addWidget(new QLabel("三、判断题。 共"+QString::number(questions3.count())+"题"));
+        Layout->addWidget(new QLabel("三、填空题。 共"+QString::number(questions3.count())+"题"));
         for (int i=0;i<questions3.count();++i) {
             index++;
             QLabel *label = new QLabel(QString::number(index)+". " + questions3[i].content + "(分值:"+QString::number(questions3[i].value)+"分)");
@@ -183,7 +181,6 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             Layout->addWidget(lineEdit);
         }
     }
-
     if (questions4.count() > 0){
         Layout->addWidget(new QLabel("四、简答题。 共"+QString::number(questions4.count())+"题"));
         for (int i=0;i<questions4.count();++i) {
@@ -196,7 +193,6 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             Layout->addWidget(textEdit);
         }
     }
-
     if (questions5.count() > 0){
         Layout->addWidget(new QLabel("五、编程题。 共"+QString::number(questions5.count())+"题"));
         for (int i=0;i<questions5.count();++i) {
@@ -263,24 +259,34 @@ void Exam::updateAnswer()//更新答案
 
 void Exam::uploadFile()// 文件上传
 {
-    QNetworkRequest request;
-    QString url = "";
-    request.setUrl(QUrl(url));
-    request.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/x-www-form-urlencoded"));
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    auto body = QString("").toLatin1();
-    QNetworkReply *reply = manager->post(request, body);
-    connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply* r){
-        Q_UNUSED(r)
-        // 处理返回结果的逻辑
-    });
-    connect(reply, &QNetworkReply::readyRead, [=](){
-        qDebug () << "readyRead";
-    });
+    QNetworkAccessManager manager;
+    QUrl url;
+    url.setScheme("ftp");
+    url.setUserName("zzq");
+    url.setPassword("zzq123");
+    url.setHost("122.51.73.146");
+    url.setPort(21);
+    url.setPath("/avi_"+QString::number(recordid)+".avi");
+    QString fileName = QDir::currentPath()+"/avi_"+QString::number(recordid)+".avi";
+    QFile file(fileName);
+    file.open(QIODevice::ReadOnly);
+    QByteArray data = file.readAll();
+    file.close();
+    QNetworkRequest request(url);
+    QNetworkReply* reply = manager.put(request, data);
+    QEventLoop eventLoop;
+    QObject::connect(reply, SIGNAL(finished()), &eventLoop, SLOT(quit()));
+    eventLoop.exec();
+    if (reply->error() != QNetworkReply::NoError) {
+        qDebug() << "Error: " << reply->errorString();
+    } else {
+        qDebug() << "Success: " << "上传成功！";
+    }
 }
 
 void Exam::on_pushButton_clicked()// 提交按钮
 {
+    uploadFile();
     this->close();
 }
 

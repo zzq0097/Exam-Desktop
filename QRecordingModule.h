@@ -25,11 +25,11 @@ public:
     QRecordingModule(QObject *parent = NULL);
 	~QRecordingModule();
 
-    void startRecord();
+    void startRecord(QString recordid);
 	void stopRecord();
 
 private:
-	void initAvi();
+    void initAvi(QString recordid);
 	void endAvi();
 
 protected:

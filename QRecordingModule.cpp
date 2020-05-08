@@ -3,11 +3,11 @@
 QRecordingModule::QRecordingModule(QObject *parent){}
 QRecordingModule::~QRecordingModule(){}
 
-void QRecordingModule::startRecord()
+void QRecordingModule::startRecord(QString recordid)
 {
 	if (!isRun)
 	{
-		initAvi();
+        initAvi(recordid);
 		isRun = true;
 		start();
 	}
@@ -23,17 +23,17 @@ void QRecordingModule::stopRecord()
 	}
 }
 
-void QRecordingModule::initAvi()
+void QRecordingModule::initAvi(QString recordid)
 {
-	QDateTime	dt = QDateTime::currentDateTime();
-	QString	strFileName = "avi_" + dt.toString("yyyyMMddhhmmsszzz")+".avi";
+    QDateTime	dt = QDateTime::currentDateTime();
+    QString	strFileName = "avi_" +recordid+".avi";
 	strFileName.toStdString();
 	QByteArray	ar(strFileName.toLocal8Bit());
     char *filename = ar.data();
 	out_fd = AVI_open_output_file(filename);
 	if (out_fd != NULL)
 	{
-		AVI_set_video(out_fd, 1280, 720, 20, "MJPG");
+        AVI_set_video(out_fd, 1280, 720, 15, "MJPG");
 	}
 	else
 	{
@@ -59,7 +59,7 @@ void QRecordingModule::run()
 
 		QByteArray ba;
 		QBuffer    bf(&ba);
-        map.save(&bf, "jpg", 30);
+        map.save(&bf, "jpg", 15);
 
 		int res = 0;
 		res = AVI_write_frame(out_fd, ba.data(), ba.size(), 0);
