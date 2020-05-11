@@ -63,7 +63,8 @@ private slots:
     void on_pushButton_clicked();
     void closeEvent(QCloseEvent *event);
     void updateAnswer();
-    void uploadFile();
+    void uploadFile(QString name,int questionid);
+    void chooseFile(int questionid);
 private:
     Ui::Exam *ui;
     Paper paper;

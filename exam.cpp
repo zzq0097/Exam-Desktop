@@ -1,6 +1,7 @@
 #include "exam.h"
 #include "ui_exam.h"
 #include <QDir>
+#include <QFileDialog>
 
 Exam::Exam(Paper thispaper,QWidget *parent) :
     QWidget(parent),
@@ -49,12 +50,15 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     if (paper.pattern==1){  // 限通信模式
         // 杀死进程
         KillProgress *killer = new KillProgress;
-        killer->kill("Typora.exe");
+        query.exec("select process from balck_list");
+        while(query.next()){
+            killer->kill(query.value(0).toString());
+        }
         // 禁用USB
         UsbMgr *usbMgr = new UsbMgr;
         usbMgr->disableUSB();
-        usbMgr->enableUSB();
-        if (1==1){  // 是否开启录屏
+//        usbMgr->enableUSB();
+        if (0==1){  // 是否开启录屏
             QRecordingModule *qrm = new QRecordingModule;
             qrm->startRecord(QString::number(recordid));
         }
@@ -62,6 +66,8 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         // 全屏
         this->showFullScreen();
         // 启用键盘钩子 禁用组合键
+        ui->scrollArea->move((this->geometry().width()-ui->scrollArea->width())/2,0);
+        ui->pushButton->move((this->geometry().width()-ui->pushButton->width())/2,1080-40);
         KeyHook *keyhook = new KeyHook;
         keyhook->setHook();
         keyhook->setLock();
@@ -200,9 +206,12 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             QLabel *label = new QLabel(QString::number(index)+". " + questions5[i].content + "(分值:"+QString::number(questions5[i].value)+"分)");
             label->setObjectName(QString::number(questions5[i].answerid));
             Layout->addWidget(label);
-            QTextEdit *textEdit = new QTextEdit;
-            textEdit->setHtml(questions4[i].answer);
-            Layout->addWidget(textEdit);
+            QPushButton *qb = new QPushButton;
+            connect(qb,&QPushButton::clicked,this,[ = ] {
+                chooseFile(questions5[i].questionid);
+            });
+            qb->setText("选择文件");
+            Layout->addWidget(qb);
         }
     }
 
@@ -257,7 +266,27 @@ void Exam::updateAnswer()//更新答案
     }
 }
 
-void Exam::uploadFile()// 文件上传
+void Exam::on_pushButton_clicked()// 提交按钮
+{
+    if (0==1){
+        uploadFile("video",0);
+    }
+    this->close();
+}
+
+void Exam::chooseFile(int questionid)
+{
+    QString filepath = QFileDialog::getOpenFileName(NULL, "请选择数据文件", "", "ZIP(*ZIP)");
+    if (filepath.isEmpty())
+    {
+        QMessageBox::warning(NULL, "提示", "未选择数据文件", "确定");
+        return;
+    } else {
+        uploadFile(filepath,questionid);
+    }
+}
+
+void Exam::uploadFile(QString name,int questionid)// 文件上传
 {
     QNetworkAccessManager manager;
     QUrl url;
@@ -266,8 +295,17 @@ void Exam::uploadFile()// 文件上传
     url.setPassword("zzq123");
     url.setHost("122.51.73.146");
     url.setPort(21);
-    url.setPath("/avi_"+QString::number(recordid)+".avi");
-    QString fileName = QDir::currentPath()+"/avi_"+QString::number(recordid)+".avi";
+    QString fileName;
+    if (name == "video"){
+        // 本地文件路径
+        fileName = QDir::currentPath()+"/avi_"+QString::number(recordid)+".avi";
+        // ftp 服务器文件路径
+        url.setPath("/video/avi_"+QString::number(recordid)+".avi");
+    } else {
+        fileName = name;
+        qDebug()<<"/code/r"+QString::number(recordid)+"q"+QString::number(questionid)+".zip";
+        url.setPath("/code/r"+QString::number(recordid)+"q"+QString::number(questionid)+".zip");
+    }
     QFile file(fileName);
     file.open(QIODevice::ReadOnly);
     QByteArray data = file.readAll();
@@ -280,14 +318,8 @@ void Exam::uploadFile()// 文件上传
     if (reply->error() != QNetworkReply::NoError) {
         qDebug() << "Error: " << reply->errorString();
     } else {
-        qDebug() << "Success: " << "上传成功！";
+        qDebug() << "Success: " << "上传成功！->"<<fileName;
     }
-}
-
-void Exam::on_pushButton_clicked()// 提交按钮
-{
-    uploadFile();
-    this->close();
 }
 
 void Exam::closeEvent(QCloseEvent *event)//退出事件检测

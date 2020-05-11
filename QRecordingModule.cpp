@@ -33,7 +33,7 @@ void QRecordingModule::initAvi(QString recordid)
 	out_fd = AVI_open_output_file(filename);
 	if (out_fd != NULL)
 	{
-        AVI_set_video(out_fd, 1280, 720, 15, "MJPG");
+        AVI_set_video(out_fd, 160, 90, 5, "MJPG");
 	}
 	else
 	{
@@ -58,8 +58,8 @@ void QRecordingModule::run()
         map.save("/catch.jpg");
 
 		QByteArray ba;
-		QBuffer    bf(&ba);
-        map.save(&bf, "jpg", 15);
+        QBuffer bf(&ba);
+        map.save(&bf, "jpg", 10);
 
 		int res = 0;
 		res = AVI_write_frame(out_fd, ba.data(), ba.size(), 0);
