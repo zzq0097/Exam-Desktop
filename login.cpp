@@ -35,15 +35,17 @@ void Login::on_pushButton_login_clicked()
             showInfo("今天没有考试");
         }
         while (query.next()) {
-            id = query.value(0).toInt();
-            start = query.value(1).toDateTime().toTime_t();
-            end = query.value(2).toDateTime().toTime_t();
-            pattern = query.value(3).toInt();
-            *now = query.value(6).toInt();
+            id = query.value("paperid").toInt();
+            start = query.value("starttime").toDateTime().toTime_t();
+            end = query.value("finishtime").toDateTime().toTime_t();
+            pattern = query.value("pattern").toInt();
+            monitor = query.value("ismonitor").toInt();
+            *now = query.value("unix_timestamp()").toInt();
 
             paper.id = id;
             paper.pattern = pattern;
             paper.username = ui->username->text();
+            paper.monitor = monitor;
             paper.countdown = *now - start;
 
             if (start<=*now) {

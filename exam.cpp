@@ -8,6 +8,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     ui(new Ui::Exam)
 {
     ui->setupUi(this);
+    this->setFixedSize(this->width(),this->height());
     // 数据初始化
     this->paper = thispaper;
     int index = 0;
@@ -50,7 +51,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     if (paper.pattern==1){  // 限通信模式
         // 杀死进程
         KillProgress *killer = new KillProgress;
-        query.exec("select process from balck_list");
+        query.exec("select process from black_list");
         while(query.next()){
             killer->kill(query.value(0).toString());
         }
@@ -58,7 +59,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         UsbMgr *usbMgr = new UsbMgr;
         usbMgr->disableUSB();
 //        usbMgr->enableUSB();
-        if (0==1){  // 是否开启录屏
+        if (paper.monitor==1){  // 是否开启录屏
             QRecordingModule *qrm = new QRecordingModule;
             qrm->startRecord(QString::number(recordid));
         }
@@ -66,7 +67,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         // 全屏
         this->showFullScreen();
         // 启用键盘钩子 禁用组合键
-        ui->scrollArea->move((this->geometry().width()-ui->scrollArea->width())/2,0);
+        ui->scrollArea->move((this->geometry().width()-ui->scrollArea->width())/2,60);
         ui->pushButton->move((this->geometry().width()-ui->pushButton->width())/2,1080-40);
         KeyHook *keyhook = new KeyHook;
         keyhook->setHook();
@@ -268,7 +269,7 @@ void Exam::updateAnswer()//更新答案
 
 void Exam::on_pushButton_clicked()// 提交按钮
 {
-    if (0==1){
+    if (paper.monitor==1){
         uploadFile("video",0);
     }
     this->close();
@@ -317,8 +318,10 @@ void Exam::uploadFile(QString name,int questionid)// 文件上传
     eventLoop.exec();
     if (reply->error() != QNetworkReply::NoError) {
         qDebug() << "Error: " << reply->errorString();
+        QMessageBox::about(NULL,"提示","上传失败，请联系管理员");
     } else {
         qDebug() << "Success: " << "上传成功！->"<<fileName;
+        QMessageBox::about(NULL,"提示","上传成功");
     }
 }
 

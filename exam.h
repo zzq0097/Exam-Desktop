@@ -41,6 +41,7 @@ public:
         int id;
         int pattern;
         int countdown;
+        int monitor;
 
     };
     struct Question{

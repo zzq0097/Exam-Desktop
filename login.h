@@ -41,6 +41,7 @@ private:
     int id;
     int start;
     int end;
+    int monitor;
     int pattern;
 };
 #endif // LOGIN_H
