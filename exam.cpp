@@ -28,6 +28,9 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     while(query.next()){
         paper.studentid = query.value(0).toInt();
     }
+
+
+
     // 获取或插入考试记录
     query.prepare("select * from record where studentid = :studentid and paperid = :paperid");
     query.bindValue(":studentid",paper.studentid);
@@ -48,7 +51,10 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         isExist = false;
     }
     // 模式与功能初始化
+    QString info = "试卷ID:" + QString::number(paper.id)
+                    + "    考试人: " + paper.username;
     if (paper.pattern==1){  // 限通信模式
+        this->setWindowTitle(info);
         // 杀死进程
         KillProgress *killer = new KillProgress;
         query.exec("select process from black_list");
@@ -64,6 +70,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             qrm->startRecord(QString::number(recordid));
         }
     } else if (paper.pattern==2){  // 霸屏模式
+        Layout->addWidget(new QLabel(info));
         // 全屏
         this->showFullScreen();
         // 启用键盘钩子 禁用组合键
@@ -215,12 +222,10 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             Layout->addWidget(qb);
         }
     }
-
-    this->setWindowTitle("试卷ID:" + QString::number(paper.id)
-                         + "    考试人: " + paper.username
-                         + "    考试时长：120分钟"
-                         + "    考试科目：JAVA");
     ui->scrollAreaWidget->setLayout(Layout);
+    QTimer *m_pTimer = new QTimer(this);
+    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(updateAnswer()));
+    m_pTimer->start(1000*10);
 }
 
 void Exam::updateAnswer()//更新答案
@@ -269,6 +274,7 @@ void Exam::updateAnswer()//更新答案
 
 void Exam::on_pushButton_clicked()// 提交按钮
 {
+    updateAnswer();
     if (paper.monitor==1){
         uploadFile("video",0);
     }
@@ -327,7 +333,6 @@ void Exam::uploadFile(QString name,int questionid)// 文件上传
 
 void Exam::closeEvent(QCloseEvent *event)//退出事件检测
 {
-    updateAnswer();
     switch(QMessageBox::information(this,tr("提示"),tr("是否提交答案并退出？"),tr("是的"),tr("取消"),0,1))
     {
     case 0:
