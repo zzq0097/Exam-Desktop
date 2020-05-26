@@ -24,6 +24,8 @@
 #include <QHttpMultiPart>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QDir>
+#include <QFileDialog>
 
 namespace Ui {
 class Exam;

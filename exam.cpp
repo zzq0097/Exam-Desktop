@@ -1,7 +1,5 @@
 #include "exam.h"
 #include "ui_exam.h"
-#include <QDir>
-#include <QFileDialog>
 
 Exam::Exam(Paper thispaper,QWidget *parent) :
     QWidget(parent),
@@ -29,8 +27,6 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         paper.studentid = query.value(0).toInt();
     }
 
-
-
     // 获取或插入考试记录
     query.prepare("select * from record where studentid = :studentid and paperid = :paperid");
     query.bindValue(":studentid",paper.studentid);
@@ -54,6 +50,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
     QString info = "试卷ID:" + QString::number(paper.id)
                     + "    考试人: " + paper.username;
     if (paper.pattern==1){  // 限通信模式
+        qDebug()<<"限通信模式";
         this->setWindowTitle(info);
         // 杀死进程
         KillProgress *killer = new KillProgress;
@@ -70,7 +67,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
             qrm->startRecord(QString::number(recordid));
         }
     } else if (paper.pattern==2){  // 霸屏模式
-        Layout->addWidget(new QLabel(info));
+        qDebug()<<"霸屏模式";
         // 全屏
         this->showFullScreen();
         // 启用键盘钩子 禁用组合键
@@ -79,6 +76,7 @@ Exam::Exam(Paper thispaper,QWidget *parent) :
         KeyHook *keyhook = new KeyHook;
         keyhook->setHook();
         keyhook->setLock();
+        Layout->addWidget(new QLabel(info));
     }
     // 获取试题并分组
     query.prepare("select distinct subjectid,type,content,option1,option2,option3,option4,answer,difficulty,chapterid,a.paperid,value from "
